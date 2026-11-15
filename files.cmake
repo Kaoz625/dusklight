@@ -1437,6 +1437,7 @@ set(DUSK_FILES
         src/dusk/commands.cpp
         src/dusk/commands.hpp
         src/dusk/game_clock.cpp
+        src/dusk/blz_autoplay.cpp
         src/dusk/hash.hpp
         src/dusk/game_mode.cpp
         src/dusk/gamepad_color.cpp

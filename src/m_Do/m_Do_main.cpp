@@ -148,6 +148,8 @@ s32 LOAD_COPYDATE(void*) {
 
 AuroraInfo auroraInfo;
 
+namespace dusk::blz { void autoplay_tick(); void frame_presented(); }
+
 bool launchUILoop() {
     while (dusk::IsRunning && !dusk::IsGameLaunched) {
         const AuroraEvent* event = aurora_update();
@@ -297,6 +299,7 @@ void main01(void) {
                         dusk::interp::begin_sim_tick();
                     }
                     dusk::game_clock::begin_sim_tick();
+                    dusk::blz::autoplay_tick();
                     mDoCPd_c::read();
                     dusk::mouse::read();
                     dusk::gyro::read(dusk::game_clock::kSimPeriod);
@@ -318,6 +321,7 @@ void main01(void) {
             dusk::game_clock::begin_sim_tick();
 
             // Game Inputs
+            dusk::blz::autoplay_tick();
             mDoCPd_c::read();
             dusk::mouse::read();
             dusk::gyro::read(timing.dt);
@@ -333,6 +337,7 @@ void main01(void) {
         }
 
         aurora_end_frame();
+        dusk::blz::frame_presented();
 
         FrameMark;
 
