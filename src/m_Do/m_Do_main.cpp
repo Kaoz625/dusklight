@@ -35,6 +35,12 @@
 #include "m_Do/m_Do_printf.h"
 #include "m_Do/m_Do_ext2.h"
 #include <cstring>
+#include <filesystem>
+#include <vector>
+#include <SDL3/SDL_filesystem.h>
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
 
 #include "dusk/app_info.hpp"
 #include "dusk/audio/DuskAudioSystem.h"
@@ -781,6 +787,44 @@ int game_main(int argc, char* argv[]) {
         return dvdPathAccess ? borealis::io::fs_path_to_string(dvdPathAccess.path()) : location;
     };
 
+    // blz (15 Nov 2026, Markus): never make him pick the disc. When the saved path is empty or gone
+    // (an iOS reinstall moves the app container, so an absolute path from an older install is stale),
+    // look for a disc image in the app's Documents, then inside the app bundle (pages' IPAs ship one).
+    bool blzAutoDisc = false;
+    if (!parsed_arg_options.count("dvd")) {
+        dusk::iso::DiscInfo probe{};
+        const std::string current = dusk::getSettings().backend.isoPath;
+        if (current.empty() || dusk::iso::inspect(current.c_str(), probe) != dusk::iso::ValidationError::Success) {
+            std::vector<std::filesystem::path> dirs;
+            if (const char* home = getenv("HOME")) {
+                dirs.emplace_back(std::filesystem::path(home) / "Documents");
+            }
+            if (const char* base = SDL_GetBasePath()) {
+                dirs.emplace_back(std::filesystem::path(base));
+            }
+            for (const auto& dir : dirs) {
+                std::error_code ec;
+                if (blzAutoDisc || !std::filesystem::is_directory(dir, ec)) continue;
+                for (const auto& e : std::filesystem::directory_iterator(dir, ec)) {
+                    std::string ext = e.path().extension().string();
+                    for (auto& c : ext) c = (char)tolower((unsigned char)c);
+                    if (ext != ".iso" && ext != ".rvz" && ext != ".gcm" && ext != ".ciso" && ext != ".nfs") continue;
+                    const std::string found = e.path().string();
+                    if (dusk::iso::inspect(found.c_str(), probe) == dusk::iso::ValidationError::Success) {
+                        DuskLog.info("blz: found the disc by itself: {}", found);
+                        dusk::getSettings().backend.isoPath.setValue(found);
+                        dusk::getSettings().backend.isoVerification.setValue(dusk::DiscVerificationState::Unknown);
+                        dusk::config::save();
+                        blzAutoDisc = true;
+                        break;
+                    }
+                }
+            }
+        } else {
+            blzAutoDisc = true;
+        }
+    }
+
     const std::string savedLocation = dusk::getSettings().backend.isoPath;
     dusk::iso::DiscInfo discInfo{};
     if (!savedLocation.empty() &&
@@ -795,6 +839,11 @@ int game_main(int argc, char* argv[]) {
     }
 
     bool skipPreLaunchUI = dusk::getSettings().backend.skipPreLaunchUI.getValue();
+#if defined(__APPLE__) && TARGET_OS_IPHONE
+    if (blzAutoDisc && !forcePreLaunchUI) {
+        skipPreLaunchUI = true;  // blz: one tap on the home screen = straight into the game on iPhone
+    }
+#endif
 
     std::string dvdLocation = dusk::getSettings().backend.isoPath;
     std::string dvdPath = resolveDvdLocation(dvdLocation);
