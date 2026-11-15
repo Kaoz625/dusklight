@@ -1,3 +1,6 @@
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
 #include "dusk/settings.h"
 
 #include "dusk/config.hpp"
@@ -109,7 +112,11 @@ UserSettings g_userSettings = {
         .mouseCameraSensitivity {"game.mouseCameraSensitivity", 1.0f},
         .invertMouseY {"game.invertMouseY", false},
         .freeCamera {"game.freeCamera", false},
+#if (defined(__APPLE__) && TARGET_OS_IPHONE) || defined(__ANDROID__)
+        .enableTouchControls {"game.enableTouchControls", true},  // blz: phones play by touch out of the box
+#else
         .enableTouchControls {"game.enableTouchControls", false},
+#endif
         .touchTargeting {"game.touchTargeting", TouchTargeting::Hybrid},
         .enableMenuPointer {"game.enableMenuPointer", true},
         .touchControlsLayout {"game.touchControlsLayout", ui::ControlLayout{}},
