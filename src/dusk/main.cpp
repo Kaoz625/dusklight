@@ -160,6 +160,10 @@ void WindowsSetupConsole(bool showConsole) {
 }
 
 int DuskMain(int argc, char* argv[]) {
+    // blz_autoplay: DUSK_CHDIR_HOME=1 makes relative --dvd / DUSK_* paths start at $HOME (the app container on iOS).
+    if (const char* home = std::getenv("HOME"); home && std::getenv("DUSK_CHDIR_HOME")) {
+        (void)chdir(home);
+    }
     WindowsSetupConsole(ShouldShowWindowsConsole(argc, argv));
     const int result = game_main(argc, argv);
     if constexpr (dusk::SupportsProcessRestart) {
