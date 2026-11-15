@@ -7,6 +7,8 @@
 
 namespace dusk::ui {
 
+void apply_recommended_preset_silently();
+
 class PresetWindow : public WindowSmall {
 public:
     PresetWindow();

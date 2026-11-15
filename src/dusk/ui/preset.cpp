@@ -152,4 +152,12 @@ bool PresetWindow::handle_nav_command(Rml::Event& event, NavCommand cmd) {
     return false;
 }
 
+// blz (Markus 15 Nov: games boot straight into the game): phones take the recommended preset
+// without asking, so a fresh install goes from the icon to the title screen with zero taps.
+void apply_recommended_preset_silently() {
+    applyPresetDusk();
+    getSettings().backend.wasPresetChosen.setValue(true);
+    config::save();
+}
+
 }  // namespace dusk::ui

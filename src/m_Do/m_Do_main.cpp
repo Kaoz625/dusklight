@@ -1009,7 +1009,11 @@ int game_main(int argc, char* argv[]) {
 #endif
 
     if (!dusk::getSettings().backend.wasPresetChosen) {
+#if (defined(__APPLE__) && TARGET_OS_IPHONE) || defined(__ANDROID__)
+        dusk::ui::apply_recommended_preset_silently();
+#else
         dusk::ui::push_document(std::make_unique<dusk::ui::PresetWindow>());
+#endif
     }
 
     OSReport("Starting main01 (Game Loop)...\n");
